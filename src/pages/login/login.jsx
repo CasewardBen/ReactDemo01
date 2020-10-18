@@ -3,6 +3,7 @@ import { Form, Icon, Input, Button } from 'antd'
 // Icon用法改变了
 import './login.less'
 import logo from './images/logo.jpg'
+import {reqLogin} from '../../api'
 
 // 登录的路由组件
 class Login extends Component{
@@ -11,10 +12,24 @@ class Login extends Component{
         // 阻止事件的默认行为
         event.preventDefault()
         // 对所有的表单字段进行校验
-        this.props.form.validateFields((err, values) => {
+        this.props.form.validateFields(async (err, values) => {
             // 校验成功
             if(!err){
                 console.log('提交登录的ajax请求：', values)
+                // 请求登录
+                const {username, password} = values
+                // reqLogin(username, password).then(
+                //     response => {
+                //         console.log('请求成功', response.data)
+                //     }
+                // ).catch(
+                //     error => {
+                //         console.log('请求失败', error)
+                //     }
+                // )
+                const response = await reqLogin(username, password)
+                console.log('请求成功', response.data)
+                
             }else{
                 console.log('校验失败')
             }
@@ -149,3 +164,14 @@ class Login extends Component{
 
 const WrapLogin = Form.create()(Login)
 export default WrapLogin
+
+
+/*
+1.作用
+    简化promise对象的使用，不用通过.then()来指定成功/失败的回调函数
+    以同步编码方式（没有回调函数）实现异步流程
+2.哪里写await
+    在返回promise的表达式左侧写await，不想要promise，而想要promise异步执行的成功的value数据
+3.哪里写async
+    await所在函数（最近）定义的左侧
+*/
