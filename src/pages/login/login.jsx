@@ -1,10 +1,12 @@
 import React, {Component} from 'react'
+import { Redirect } from 'react-router-dom'
 import { Form, Icon, Input, Button, message } from 'antd'
 // Icon用法改变了
 import './login.less'
 import logo from './images/logo.jpg'
 import {reqLogin} from '../../api'
 import memoryUtils from '../../utils/memoryUtils'
+import storageUtils from '../../utils/storageUtils'
 
 // 登录的路由组件
 class Login extends Component{
@@ -37,6 +39,7 @@ class Login extends Component{
                     //跳转到后台管理界面(不需要再回退到登录)
                     const user = result.data
                     memoryUtils.user = user // 保存在内存中
+                    storageUtils.saveUser(user) // 保存到local
                     this.props.history.replace('/')
                 }else{ //登录失败
                     // 提示错误信息
@@ -73,6 +76,13 @@ class Login extends Component{
 
 
     render(){
+
+        // 如果用户已经登录，自动跳转到管理界面
+        const user = memoryUtils.user
+        if( user && user._id){
+            return <Redirect to='/'/>
+        }
+        // 得到功能强大的form对象
         const form = this.props.form
         const { getFieldDecorator } = form
 
