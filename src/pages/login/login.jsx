@@ -3,7 +3,7 @@ import { Redirect } from 'react-router-dom'
 import { Form, Icon, Input, Button, message } from 'antd'
 // Icon用法改变了
 import './login.less'
-import logo from './images/logo.jpg'
+import logo from '../../assets/images/logo.jpg'
 import {reqLogin} from '../../api'
 import memoryUtils from '../../utils/memoryUtils'
 import storageUtils from '../../utils/storageUtils'
