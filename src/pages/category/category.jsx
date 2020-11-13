@@ -48,10 +48,11 @@ export default class Category extends Component {
   }
 
   // 异步获取一级或二级分类列表显示
-  getCategory = async() => {
+  // parentId如果没有指定根据状态中的parentId请求，如果制定了根据指定的请求
+  getCategory = async (parentId) => {
     // 在发请求前显示loading
     this.setState({loading:true})
-    const {parentId} = this.state
+    parentId = parentId || this.state.parentId
     // 发异步ajax请求，获取数据
     const result = await reqCategory([parentId])
     // 请求结束后，隐藏loading
@@ -110,27 +111,54 @@ export default class Category extends Component {
 
   // 添加分类
   addCategory = () => {
-    this.setState({
-      showStatus: 0
+    this.form.validateFields(async (err, values) => {
+      if(!err){
+        this.setState({
+          showStatus: 0
+        })
+    
+        // 收集数据并提交添加分类请求
+        const {parentId, categoryName} = this.form.getFieldsValue()
+        // 清除输入数据
+        this.form.resetFields()
+        const result = await reqAddCategory(categoryName, parentId)
+        if(result.status === 0){
+          // 添加的分类是当前分类
+          if(parentId === this.state.parentId){
+            // 重新获取当前分类列表显示
+            this.getCategory()
+          } else if(parentId === '0'){ // 在二级分类列表下添加一级分类，重新获取一级分类列表但是不需要显示一级列表
+            // 重新获取当前分类列表显示
+            this.getCategory('0')
+    
+          }
+        }
+      }
     })
   }
   // 更新分类
-  updateCategory = async () => {
-    // 隐藏确认框
-    this.setState({
-      showStatus: 0
-    })
+  updateCategory = () => {
+    // 进行表单验证，通过了才处理
+    this.form.validateFields(async (err, values) => {
+      if(!err){
+        // 隐藏确认框
+        this.setState({
+          showStatus: 0
+        })
 
-    const categoryId = this.category._id
-    const categoryName = this.form.getFieldValue('categoryName')
-    // 清楚输入数据
-    this.form.resetFields()
-    // 发请求更新分类
-    const result = await reqUpdateCategory({categoryId, categoryName})
-    if(result.status===0){
-      // 重新显示新的列表
-      this.getCategory()
-    }
+        const categoryId = this.category._id
+        const categoryName = this.form.getFieldValue('categoryName')
+        // 清楚输入数据
+        this.form.resetFields()
+        // 发请求更新分类
+        const result = await reqUpdateCategory({categoryId, categoryName})
+        if(result.status===0){
+          // 重新显示新的列表
+          this.getCategory()
+        }
+      }
+    })
+    
   }
 
   // 显示添加
@@ -201,7 +229,11 @@ export default class Category extends Component {
           onOk={this.addCategory}
           onCancel={this.handleCancel}
         >
-          <AddForm/>
+          <AddForm
+            setForm={(form)=>{this.form=form}}
+            categorys={category} 
+            parentId={parentId}
+          />
         </Modal>
         <Modal
           title="更新分类"
