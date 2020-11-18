@@ -29,6 +29,18 @@ export const reqAddCategory =(categoryName, parentId) => ajax(BASE + '/manage/ca
 // 更新分类
 export const reqUpdateCategory =({categoryId, categoryName}) => ajax(BASE + '/manage/category/update', {categoryId, categoryName}, 'POST')
 
+
+// 获取商品分页列表
+export const reqProducts = (pageNum, pageSize) => ajax(BASE +'/manage/product/list', {pageNum, pageSize})
+
+// 根据商品名称/描述搜索商品分页列表
+// searchType:搜索的类型，productName/productDesc
+export const reqSearchProducts = ({pageNum, pageSize, searchName, searchType}) => ajax(BASE + '/manage/product/search', {
+    pageNum,
+    pageSize,
+    [searchType]: searchName,
+})
+
 /*
 jsonp请求的接口请求函数
 */

@@ -9,6 +9,8 @@ import {
 } from 'antd'
 
 import LinkButton from '../../components/link-button'
+import {reqProducts, reqSearchProducts} from '../../api'
+import {PAGE_SIZE} from '../../utils/constants'
 
 const Option = Select.Option
 /*
@@ -16,20 +18,11 @@ Product的默认子路由组件
 */
 class ProductHome extends Component {
   state = { 
-    products:[
-      {
-        name: '1',
-        desc: '1111',
-        price: '11',
-        status: '111'
-      },
-      {
-        name: '2',
-        desc: '2222',
-        price: '22',
-        status: '222'
-      }
-    ], // 商品的数组
+    total: 0, // 商品总数量
+    products:[], // 商品的数组
+    loading: false, // 是否在加载中
+    searchName: '', // 搜索的关键字名称
+    searchType: 'productName', //　根据哪个字段搜索
   }
   // 初始化table列的数组
   initColumns = () => {
@@ -78,20 +71,51 @@ class ProductHome extends Component {
       },
     ]
   }
+
+  // 获取指定页码的列表数据显示
+  getProducts = async (pageNum) => {
+    this.setState({loading: true}) // 显示loading
+    const {searchName, searchType} = this.state
+    let result
+    // 如果搜索关键字有值，说明进行搜索分页
+    if(searchName){
+      result = await reqSearchProducts({pageNum, pageSize:PAGE_SIZE, searchName, searchType})
+    }else{
+      result = await reqProducts(pageNum, PAGE_SIZE)
+    }
+    this.setState({loading: false}) // 隐藏loading
+    if(result.status === 0){
+      // 取出分页数据，更新状态，显示分页列表
+      const {total, list} = result.data
+      this.setState({
+        total,
+        products: list
+      })
+    }
+  }
+
   componentWillMount(){
     this.initColumns()
   }
+  componentDidMount(){
+    this.getProducts(1)
+  }
   render() {
     // 取出状态数据
-    const {products} = this.state
+    const {products, total, loading, searchName, searchType} = this.state
     const title = (
       <span>
-        <Select value='1' style={{width:150}}>
-          <Option value='1'>按名称搜索</Option>
-          <Option value='2'>按描述搜索</Option>
+        <Select value={searchType} style={{width:150}} onChange={value => this.setState({searchType:value})}>
+          <Option value='productName'>按名称搜索</Option>
+          <Option value='productDesc'>按描述搜索</Option>
         </Select>
-        <Input placeholder='关键字' style={{width:150, margin:'0 15px'}}></Input>
-        <Button type='primary'>搜索</Button>
+        <Input
+          placeholder='关键字' 
+          style={{width:150, margin:'0 15px'}} 
+          value={searchName} 
+          onChange={event => {this.setState({searchName:event.target.value})}}
+        ></Input>
+        <Button type='primary' onClick={() => this.getProducts(1)}>搜索</Button>
       </span>
     )
     const extra = (
@@ -105,8 +129,15 @@ class ProductHome extends Component {
         <Table
           bordered
           rowKey='_id'
+          loading={loading}
           dataSource={products}
           columns={this.columns}
+          pagination={{
+            defaultPageSize: PAGE_SIZE,
+            total,
+            showQuickJumper: true,
+            onChange: this.getProducts
+          }}
         />
       </Card>
     );
